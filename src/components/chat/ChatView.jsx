@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, BarChart3, Search, Activity } from 'lucide-react';
+import { Send, Sparkles, BarChart3, Search, Activity, StopCircle } from 'lucide-react';
 import { Watchlist } from './Watchlist';
+import { useAIChat } from '../../hooks/useAIChat';
 
 const QUICK_ACTIONS = [
   { label: 'Analyze TSLA', icon: BarChart3, action: 'analyze TSLA' },
@@ -19,10 +20,13 @@ function detectIntent(text) {
 }
 
 export function ChatView({ watchlist, onAnalyze, onScannerOpen, onWatchlistAdd, onWatchlistRemove }) {
+  const { sendMessage, streaming, cancel, hasAI } = useAIChat();
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: 'Welcome to TVK! I can help you analyze stocks with real market data.\n\nTry:\n- "Analyze TSLA" to see real-time price, charts, and technicals\n- "Scan market" to view the market scanner\n- Or click any stock in your watchlist to dive in.',
+      content: hasAI
+        ? 'Welcome to TVK! I can help you analyze stocks, answer market questions, and discuss trading strategies.\n\nTry:\n- "Analyze TSLA" to see real-time charts and data\n- Ask me anything about stocks, options, or technical analysis\n- "Scan market" to view the market scanner'
+        : 'Welcome to TVK! I can help you analyze stocks with real market data.\n\nTry:\n- "Analyze TSLA" to see real-time price, charts, and technicals\n- "Scan market" to view the market scanner\n- Or click any stock in your watchlist to dive in.',
       timestamp: new Date(),
     },
   ]);
@@ -34,11 +38,12 @@ export function ChatView({ watchlist, onAnalyze, onScannerOpen, onWatchlistAdd, 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSend = (text) => {
+  const handleSend = async (text) => {
     const msg = text || input.trim();
-    if (!msg) return;
+    if (!msg || isLoading || streaming) return;
 
-    setMessages((prev) => [...prev, { role: 'user', content: msg, timestamp: new Date() }]);
+    const userMessage = { role: 'user', content: msg, timestamp: new Date() };
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
 
     const intent = detectIntent(msg);
@@ -69,19 +74,60 @@ export function ChatView({ watchlist, onAnalyze, onScannerOpen, onWatchlistAdd, 
       return;
     }
 
-    // General chat — provide guidance
-    setIsLoading(true);
-    setTimeout(() => {
+    // General chat — use Claude if available, otherwise canned response
+    if (hasAI) {
+      // Build conversation history for Claude (last 20 messages)
+      const allMessages = [...messages, userMessage];
+      const chatHistory = allMessages
+        .slice(-20)
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      // Add a placeholder assistant message that we'll stream into
       setMessages((prev) => [
         ...prev,
-        {
-          role: 'assistant',
-          content: `I can help you analyze any US stock! Try:\n- **"Analyze TSLA"** — real-time price, candlestick chart, technical indicators, news & earnings\n- **"Analyze NVDA"** — same for any ticker\n- **"Scan market"** — view all major stocks at once\n\nOr just click a ticker in your watchlist on the right.`,
-          timestamp: new Date(),
-        },
+        { role: 'assistant', content: '', timestamp: new Date() },
       ]);
-      setIsLoading(false);
-    }, 300);
+
+      try {
+        await sendMessage(chatHistory, null, (chunk) => {
+          setMessages((prev) => {
+            const updated = [...prev];
+            const last = updated[updated.length - 1];
+            if (last && last.role === 'assistant') {
+              updated[updated.length - 1] = { ...last, content: last.content + chunk };
+            }
+            return updated;
+          });
+        });
+      } catch (err) {
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last && last.role === 'assistant') {
+            updated[updated.length - 1] = {
+              ...last,
+              content: last.content || `Sorry, I encountered an error: ${err.message}`,
+            };
+          }
+          return updated;
+        });
+      }
+    } else {
+      // Fallback: canned response
+      setIsLoading(true);
+      setTimeout(() => {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content: `I can help you analyze any US stock! Try:\n- **"Analyze TSLA"** — real-time price, candlestick chart, technical indicators, news & earnings\n- **"Analyze NVDA"** — same for any ticker\n- **"Scan market"** — view all major stocks at once\n\nOr just click a ticker in your watchlist on the right.\n\n*Tip: Configure an AI provider in setup for AI-powered chat.*`,
+            timestamp: new Date(),
+          },
+        ]);
+        setIsLoading(false);
+      }, 300);
+    }
   };
 
   const handleKeyDown = (e) => {
@@ -154,12 +200,22 @@ export function ChatView({ watchlist, onAnalyze, onScannerOpen, onWatchlistAdd, 
               placeholder="Ask me to analyze any stock... (e.g., 'analyze TSLA')"
               className="flex-1 px-4 py-3 bg-[#0d1117] border border-[#252c3a] rounded-xl text-sm text-[#e0e6ed] placeholder-[#5a6478] focus:outline-none focus:border-[#00ffc8]/50 transition-colors"
             />
-            <button
-              onClick={() => handleSend()}
-              className="p-3 bg-[#00ffc8] text-[#0a0e14] rounded-xl hover:bg-[#00ffc8]/90 transition-colors"
-            >
-              <Send className="w-4 h-4" />
-            </button>
+            {streaming ? (
+              <button
+                onClick={cancel}
+                className="p-3 bg-[#ff4976] text-white rounded-xl hover:bg-[#ff4976]/90 transition-colors"
+              >
+                <StopCircle className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={() => handleSend()}
+                disabled={isLoading}
+                className="p-3 bg-[#00ffc8] text-[#0a0e14] rounded-xl hover:bg-[#00ffc8]/90 transition-colors disabled:opacity-50"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>

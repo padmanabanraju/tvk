@@ -1,4 +1,7 @@
-import { Brain, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Info } from 'lucide-react';
+import { useState } from 'react';
+import { Brain, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Info, Sparkles, Loader2 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import { analyzeStock, buildAiConfig, hasAiKey } from '../../services/aiClient';
 
 function SignalIcon({ type }) {
   if (type === 'bullish') return <TrendingUp className="w-3.5 h-3.5 text-[#00ffc8] shrink-0" />;
@@ -23,7 +26,29 @@ function SignalBadge({ type }) {
   );
 }
 
-export function AIInsights({ analysis }) {
+export function AIInsights({ analysis, stockData }) {
+  const { apiKeys } = useAuth();
+  const [claudeText, setClaudeText] = useState(null);
+  const [claudeLoading, setClaudeLoading] = useState(false);
+  const [claudeError, setClaudeError] = useState(null);
+
+  const hasAI = hasAiKey(apiKeys);
+
+  const handleGenerateAI = async () => {
+    if (!stockData || !hasAI) return;
+    setClaudeLoading(true);
+    setClaudeError(null);
+    try {
+      const aiConfig = buildAiConfig(apiKeys);
+      const text = await analyzeStock(stockData, aiConfig);
+      setClaudeText(text);
+    } catch (err) {
+      setClaudeError(err.message || 'Failed to generate AI analysis');
+    } finally {
+      setClaudeLoading(false);
+    }
+  };
+
   if (!analysis) return null;
 
   const { trend, momentum, valuation, newsSentiment, riskAssessment } = analysis;
@@ -33,6 +58,48 @@ export function AIInsights({ analysis }) {
       <h3 className="text-sm font-semibold text-[#e0e6ed] mb-4 uppercase tracking-wider flex items-center gap-2">
         <Brain className="w-4 h-4 text-[#9d4edd]" /> AI Analysis
       </h3>
+
+      {/* Claude AI Narrative */}
+      {hasAI && (
+        <div className="mb-5 pb-5 border-b border-[#1a1f2b]">
+          {!claudeText && !claudeLoading && (
+            <button
+              onClick={handleGenerateAI}
+              className="w-full py-2.5 flex items-center justify-center gap-2 rounded-xl bg-[#9d4edd]/10 text-[#9d4edd] text-xs font-semibold hover:bg-[#9d4edd]/20 transition-colors"
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              Generate AI Analysis
+            </button>
+          )}
+          {claudeLoading && (
+            <div className="flex items-center justify-center gap-2 py-4 text-xs text-[#9d4edd]">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              AI is analyzing...
+            </div>
+          )}
+          {claudeError && (
+            <div className="text-xs text-[#ff4976] bg-[#ff4976]/5 p-3 rounded-lg">
+              {claudeError}
+              <button onClick={handleGenerateAI} className="ml-2 text-[#00ffc8] hover:underline">Retry</button>
+            </div>
+          )}
+          {claudeText && (
+            <div className="text-sm text-[#c8cdd5] leading-relaxed space-y-2">
+              <div className="flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#9d4edd]" />
+                <span className="text-xs font-semibold text-[#9d4edd] uppercase tracking-wider">AI Analysis</span>
+              </div>
+              {claudeText.split('\n\n').map((para, i) => (
+                <p key={i}>
+                  {para.split('**').map((part, j) =>
+                    j % 2 === 1 ? <strong key={j} className="text-[#e0e6ed]">{part}</strong> : part
+                  )}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Trend Summary */}
       {trend && (

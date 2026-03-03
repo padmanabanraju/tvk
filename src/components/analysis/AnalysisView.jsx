@@ -135,7 +135,7 @@ export function AnalysisView({ symbol, onSymbolChange }) {
                 <PriceTargets targets={analysis.priceTargets} price={data.price} />
               )}
 
-              {analysis && <AIInsights analysis={analysis} />}
+              {analysis && <AIInsights analysis={analysis} stockData={data} />}
             </div>
           </div>
 

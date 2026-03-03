@@ -125,10 +125,15 @@ class FinnhubClient {
   constructor() {
     this.rateLimiter = new RateLimiter();
     this.cache = new ApiCache();
+    this._apiKey = null;
+  }
+
+  setApiKey(key) {
+    this._apiKey = key;
   }
 
   getApiKey() {
-    return import.meta.env.VITE_FINNHUB_API_KEY || '';
+    return this._apiKey || import.meta.env.VITE_FINNHUB_API_KEY || '';
   }
 
   async fetch(endpoint, params = {}, cacheTtl = 0) {

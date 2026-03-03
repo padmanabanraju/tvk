@@ -1,9 +1,13 @@
-import { useState, Component } from 'react';
+import { useState, useEffect, Component } from 'react';
 import { Header } from './components/layout/Header';
 import { ChatView } from './components/chat/ChatView';
 import { AnalysisView } from './components/analysis/AnalysisView';
 import { ScannerView } from './components/scanner/ScannerView';
-import { Activity, Key, ExternalLink, AlertTriangle } from 'lucide-react';
+import { SetupWizard } from './components/setup/SetupWizard';
+import { UnlockScreen } from './components/setup/UnlockScreen';
+import { useAuth } from './contexts/AuthContext';
+import { finnhubClient } from './services/finnhub';
+import { AlertTriangle } from 'lucide-react';
 
 // Error Boundary to catch rendering errors and show them instead of blank page
 class ErrorBoundary extends Component {
@@ -42,74 +46,28 @@ class ErrorBoundary extends Component {
   }
 }
 
-function ApiKeySetup() {
-  return (
-    <div className="min-h-screen bg-[#0a0e14] flex items-center justify-center p-6">
-      <div className="glass-card rounded-2xl p-10 max-w-lg w-full text-center">
-        <div className="w-16 h-16 rounded-2xl bg-[#00ffc8]/10 flex items-center justify-center mx-auto mb-6">
-          <Key className="w-8 h-8 text-[#00ffc8]" />
-        </div>
-        <h1 className="text-2xl font-bold text-[#e0e6ed] mb-2">Finnhub API Key Required</h1>
-        <p className="text-sm text-[#5a6478] mb-6">
-          TVK uses real market data from Finnhub. Set up your free API key to get started.
-        </p>
-
-        <div className="text-left space-y-4 mb-8">
-          <div className="flex gap-3">
-            <span className="w-6 h-6 rounded-full bg-[#00ffc8]/10 text-[#00ffc8] text-xs font-bold flex items-center justify-center shrink-0">1</span>
-            <div>
-              <p className="text-sm text-[#e0e6ed]">Sign up at Finnhub (free, no credit card)</p>
-              <a
-                href="https://finnhub.io/register"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[#00ffc8] hover:underline flex items-center gap-1 mt-0.5"
-              >
-                finnhub.io/register <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <span className="w-6 h-6 rounded-full bg-[#00ffc8]/10 text-[#00ffc8] text-xs font-bold flex items-center justify-center shrink-0">2</span>
-            <p className="text-sm text-[#e0e6ed]">Copy your API key from the Finnhub dashboard</p>
-          </div>
-          <div className="flex gap-3">
-            <span className="w-6 h-6 rounded-full bg-[#00ffc8]/10 text-[#00ffc8] text-xs font-bold flex items-center justify-center shrink-0">3</span>
-            <div>
-              <p className="text-sm text-[#e0e6ed]">
-                Add it to the <code className="mono text-xs bg-[#1a1f2b] px-1.5 py-0.5 rounded">.env</code> file in the project root:
-              </p>
-              <pre className="mt-2 p-3 bg-[#0d1117] rounded-lg text-xs mono text-[#00ffc8] overflow-x-auto">
-                VITE_FINNHUB_API_KEY=your_api_key_here
-              </pre>
-            </div>
-          </div>
-          <div className="flex gap-3">
-            <span className="w-6 h-6 rounded-full bg-[#00ffc8]/10 text-[#00ffc8] text-xs font-bold flex items-center justify-center shrink-0">4</span>
-            <p className="text-sm text-[#e0e6ed]">
-              Restart the dev server: <code className="mono text-xs bg-[#1a1f2b] px-1.5 py-0.5 rounded">npm run dev</code>
-            </p>
-          </div>
-        </div>
-
-        <div className="p-3 bg-[#1a1f2b] rounded-xl text-xs text-[#5a6478]">
-          Free tier: 60 API calls/minute — plenty for personal analysis use.
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function App() {
+  const { isFirstTime, isLocked, isUnlocked, apiKeys } = useAuth();
+
   const [currentView, setCurrentView] = useState('chat');
   const [selectedSymbol, setSelectedSymbol] = useState(null);
   const [watchlist, setWatchlist] = useState(['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMD', 'GOOGL']);
 
-  const apiKey = import.meta.env.VITE_FINNHUB_API_KEY;
+  // Inject Finnhub API key when unlocked
+  useEffect(() => {
+    if (isUnlocked && apiKeys?.finnhubApiKey) {
+      finnhubClient.setApiKey(apiKeys.finnhubApiKey);
+    }
+  }, [isUnlocked, apiKeys]);
 
-  // Show setup screen if no API key
-  if (!apiKey) {
-    return <ApiKeySetup />;
+  // Show setup wizard for first-time users
+  if (isFirstTime) {
+    return <SetupWizard />;
+  }
+
+  // Show unlock screen for returning users
+  if (isLocked) {
+    return <UnlockScreen />;
   }
 
   const handleAnalyze = (symbol) => {
