@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vite build)",
+      "Bash(git init)",
+      "Bash(git add -A -- ':!node_modules' ':!dist' ':!.env' ':!.DS_Store')",
+      "Bash(git add --all)",
+      "Bash(git reset -- node_modules/ dist/ .env .DS_Store)"
+    ]
+  }
+}
