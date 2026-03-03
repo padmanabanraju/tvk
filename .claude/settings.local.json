@@ -6,7 +6,8 @@
       "Bash(git add -A -- ':!node_modules' ':!dist' ':!.env' ':!.DS_Store')",
       "Bash(git add --all)",
       "Bash(git reset -- node_modules/ dist/ .env .DS_Store)",
-      "Bash(chmod +x /Users/padhu/Projects/TVK/deploy.sh)"
+      "Bash(chmod +x /Users/padhu/Projects/TVK/deploy.sh)",
+      "Bash(npm run build)"
     ]
   }
 }

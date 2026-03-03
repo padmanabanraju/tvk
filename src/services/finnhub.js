@@ -76,48 +76,39 @@ function createTimeout(ms) {
   return controller;
 }
 
-// --- Yahoo Finance fallback for candle data ---
+// --- Yahoo Finance fallback for candle data (via server proxy) ---
 async function fetchYahooCandles(symbol, range = '1y', interval = '1d') {
-  // Try multiple CORS proxy approaches
-  const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
+  const ctrl = createTimeout(10000);
+  try {
+    const resp = await window.fetch(
+      `/api/yahoo/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}`,
+      { signal: ctrl.signal }
+    );
+    clearTimeout(ctrl._timer);
+    if (!resp.ok) return null;
 
-  const proxyUrls = [
-    yahooUrl, // Direct first (works in some environments)
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(yahooUrl)}`,
-    `https://corsproxy.io/?${encodeURIComponent(yahooUrl)}`,
-  ];
+    const json = await resp.json();
+    const result = json?.chart?.result?.[0];
+    if (!result || !result.timestamp) return null;
 
-  for (const url of proxyUrls) {
-    const ctrl = createTimeout(8000);
-    try {
-      const resp = await window.fetch(url, { signal: ctrl.signal });
-      clearTimeout(ctrl._timer);
-      if (!resp.ok) continue;
-      const json = await resp.json();
-      const result = json?.chart?.result?.[0];
-      if (!result || !result.timestamp) continue;
+    const quotes = result.indicators?.quote?.[0];
+    if (!quotes) return null;
 
-      const quotes = result.indicators?.quote?.[0];
-      if (!quotes) continue;
-
-      // Convert to Finnhub-compatible format
-      return {
-        t: result.timestamp,
-        o: quotes.open,
-        h: quotes.high,
-        l: quotes.low,
-        c: quotes.close,
-        v: quotes.volume,
-        s: 'ok',
-      };
-    } catch (e) {
-      clearTimeout(ctrl._timer);
-      console.warn(`[Yahoo] Proxy attempt failed:`, e.message);
-      continue;
-    }
+    // Convert to Finnhub-compatible format
+    return {
+      t: result.timestamp,
+      o: quotes.open,
+      h: quotes.high,
+      l: quotes.low,
+      c: quotes.close,
+      v: quotes.volume,
+      s: 'ok',
+    };
+  } catch (e) {
+    clearTimeout(ctrl._timer);
+    console.warn(`[Yahoo] Proxy fetch failed:`, e.message);
+    return null;
   }
-
-  return null;
 }
 
 // --- Finnhub Client ---

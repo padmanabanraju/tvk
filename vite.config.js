@@ -150,6 +150,28 @@ function aiProxyPlugin() {
         }
       });
 
+      // Yahoo Finance proxy (candle data fallback)
+      server.middlewares.use('/api/yahoo/chart/', async (req, res) => {
+        if (req.method !== 'GET') return sendError(res, 405, 'Method not allowed');
+        const symbol = req.url.split('?')[0].replace(/^\//, '');
+        const url = new URL(req.url, 'http://localhost');
+        const range = url.searchParams.get('range') || '1y';
+        const interval = url.searchParams.get('interval') || '1d';
+        const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
+
+        try {
+          const response = await fetch(yahooUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+          });
+          const data = await response.json();
+          res.statusCode = response.status;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify(data));
+        } catch (err) {
+          sendError(res, 502, `Failed to reach Yahoo Finance: ${err.message}`);
+        }
+      });
+
       // Ollama model list
       server.middlewares.use('/api/ai/ollama-tags', async (req, res) => {
         if (req.method !== 'GET') return sendError(res, 405, 'Method not allowed');

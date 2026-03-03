@@ -159,6 +159,26 @@ app.get('/api/ai/ollama-tags', async (req, res) => {
   }
 });
 
+// ── Yahoo Finance proxy (candle data fallback) ──────────────────
+
+app.get('/api/yahoo/chart/:symbol', async (req, res) => {
+  const { symbol } = req.params;
+  const range = req.query.range || '1y';
+  const interval = req.query.interval || '1d';
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(symbol)}?range=${range}&interval=${interval}&includePrePost=false`;
+
+  try {
+    const response = await fetch(url, {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+    });
+    const data = await response.json();
+    res.status(response.status).json(data);
+  } catch (err) {
+    console.error('[TVK] Yahoo proxy error:', err.message);
+    res.status(502).json({ error: 'Failed to reach Yahoo Finance', details: err.message });
+  }
+});
+
 // ── SPA fallback ────────────────────────────────────────────────
 
 app.get('*', (req, res) => {
