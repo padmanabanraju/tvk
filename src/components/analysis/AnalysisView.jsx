@@ -103,9 +103,9 @@ export function AnalysisView({ symbol, onSymbolChange }) {
 
       {!loading && data && (
         <>
-          {/* Row 1: Chart + Key Stats + AI Insights */}
+          {/* Row 1: Chart + Sidebar (Key Stats, AI Insights) */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2 space-y-6">
+            <div className="xl:col-span-2">
               <div className="glass-card rounded-2xl p-6">
                 <PriceHeader data={data} />
                 {displayCandles && displayCandles.length > 0 ? (
@@ -120,12 +120,6 @@ export function AnalysisView({ symbol, onSymbolChange }) {
                   </div>
                 )}
               </div>
-
-              <TechnicalIndicators indicators={data.indicators} />
-
-              {analysis?.maAnalysis && analysis.maAnalysis.length > 0 && (
-                <MAAnalysis maAnalysis={analysis.maAnalysis} price={data.price} />
-              )}
             </div>
 
             <div className="space-y-6">
@@ -138,6 +132,13 @@ export function AnalysisView({ symbol, onSymbolChange }) {
               {analysis && <AIInsights analysis={analysis} stockData={data} />}
             </div>
           </div>
+
+          {/* Technical Analysis */}
+          <TechnicalIndicators indicators={data.indicators} />
+
+          {analysis?.maAnalysis && analysis.maAnalysis.length > 0 && (
+            <MAAnalysis maAnalysis={analysis.maAnalysis} price={data.price} />
+          )}
 
           {/* Row 2: Options Strategies (full width) */}
           {analysis?.optionsStrategies && (
