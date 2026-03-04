@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Activity, Key, Brain, Lock, ExternalLink, CheckCircle, AlertTriangle, Eye, EyeOff, ArrowRight, ArrowLeft, Cpu, Sparkles, Globe, Server } from 'lucide-react';
+import { Activity, Key, Brain, Lock, ExternalLink, CheckCircle, AlertTriangle, Eye, EyeOff, ArrowRight, ArrowLeft, Cpu, Sparkles, Globe, Server, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { AI_PROVIDERS, PROVIDER_IDS } from '../../services/aiProviders';
 
@@ -56,6 +56,7 @@ export function SetupWizard() {
   const [showPassword, setShowPassword] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [showSecurity, setShowSecurity] = useState(false);
 
   // Test Finnhub connection
   const testFinnhub = async () => {
@@ -306,6 +307,36 @@ export function SetupWizard() {
               </div>
             )}
 
+            {/* Security info */}
+            <button
+              onClick={() => setShowSecurity(!showSecurity)}
+              className="flex items-center gap-1.5 text-xs text-[#5a6478] hover:text-[#e0e6ed] transition-colors w-full"
+            >
+              <Shield className="w-3 h-3" />
+              <span>How are my keys protected?</span>
+              {showSecurity ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+            </button>
+            {showSecurity && (
+              <div className="p-3 bg-[#0d1117] rounded-xl space-y-2 text-[10px] text-[#8892a6] border border-[#252c3a]">
+                <div className="flex items-start gap-2">
+                  <Lock className="w-3 h-3 text-[#ffd700] shrink-0 mt-0.5" />
+                  <span><strong className="text-[#e0e6ed]">Encrypted at rest</strong> — keys are stored in your browser using AES-256-GCM encryption, locked with your master password.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Server className="w-3 h-3 text-[#9d4edd] shrink-0 mt-0.5" />
+                  <span><strong className="text-[#e0e6ed]">Proxied for AI calls</strong> — when you use AI features, your key is sent through our server to reach the AI provider (required due to browser CORS restrictions). The key is forwarded, never logged or stored.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <Globe className="w-3 h-3 text-[#00ffc8] shrink-0 mt-0.5" />
+                  <span><strong className="text-[#e0e6ed]">Finnhub is direct</strong> — stock data calls go straight from your browser to Finnhub. No proxy involved.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-3 h-3 text-[#00ffc8] shrink-0 mt-0.5" />
+                  <span><strong className="text-[#e0e6ed]">Verifiable</strong> — open your browser's Network tab to see exactly what's sent. No hidden requests, no data collection.</span>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between items-center pt-2">
               <button
                 onClick={() => setStep(0)}
@@ -399,7 +430,7 @@ export function SetupWizard() {
         {/* Footer */}
         <div className="mt-6 pt-4 border-t border-[#1a1f2b] text-center">
           <p className="text-[10px] text-[#5a6478]">
-            Keys are encrypted locally with AES-256-GCM. They never leave your machine.
+            Keys are encrypted locally with AES-256-GCM. AI keys are forwarded (never stored) through our proxy for API calls.
           </p>
         </div>
       </div>
