@@ -58,7 +58,7 @@ export function AnalysisView({ symbol, onSymbolChange }) {
   const displayOverlays = chartOverlays || data?.chartOverlays;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 xl:space-y-6">
       {/* Search bar */}
       <form onSubmit={handleSearch} className="flex items-center gap-3">
         <div className="relative flex-1 max-w-md">
@@ -104,9 +104,9 @@ export function AnalysisView({ symbol, onSymbolChange }) {
       {!loading && data && (
         <>
           {/* Row 1: Chart + Sidebar (Key Stats, AI Insights) */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <div className="glass-card rounded-2xl p-6">
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 xl:gap-6 items-start">
+            <div className="xl:col-span-2 space-y-4 xl:space-y-6">
+              <div className="glass-card rounded-2xl p-4 xl:p-6">
                 <PriceHeader data={data} />
                 {displayCandles && displayCandles.length > 0 ? (
                   <CandlestickChart
@@ -120,9 +120,15 @@ export function AnalysisView({ symbol, onSymbolChange }) {
                   </div>
                 )}
               </div>
+
+              <TechnicalIndicators indicators={data.indicators} />
+
+              {analysis?.maAnalysis && analysis.maAnalysis.length > 0 && (
+                <MAAnalysis maAnalysis={analysis.maAnalysis} price={data.price} />
+              )}
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4 xl:space-y-6">
               <KeyStatistics data={data} />
 
               {analysis?.priceTargets && (
@@ -133,13 +139,6 @@ export function AnalysisView({ symbol, onSymbolChange }) {
             </div>
           </div>
 
-          {/* Technical Analysis */}
-          <TechnicalIndicators indicators={data.indicators} />
-
-          {analysis?.maAnalysis && analysis.maAnalysis.length > 0 && (
-            <MAAnalysis maAnalysis={analysis.maAnalysis} price={data.price} />
-          )}
-
           {/* Row 2: Options Strategies (full width) */}
           {analysis?.optionsStrategies && (
             <OptionsStrategy
@@ -149,7 +148,7 @@ export function AnalysisView({ symbol, onSymbolChange }) {
           )}
 
           {/* Row 3: Trading Strategy + Investment + Projection */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
             <TradingStrategy
               strategies={analysis?.tradingStrategy}
               investmentThesis={analysis?.investmentThesis}

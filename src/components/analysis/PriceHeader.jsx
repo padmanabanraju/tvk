@@ -4,7 +4,7 @@ export function PriceHeader({ data }) {
   const isPositive = data.change >= 0;
 
   return (
-    <div className="flex items-start justify-between mb-4">
+    <div className="flex items-start justify-between mb-2 xl:mb-4">
       <div>
         <div className="flex items-center gap-3 mb-1">
           {data.logo && (

@@ -9,10 +9,13 @@ const TIMEFRAMES = [
   { label: '1Y', days: 365, resolution: 'D' },
 ];
 
-export function CandlestickChart({ candles, chartOverlays, height = 450, onTimeframeChange }) {
+export function CandlestickChart({ candles, chartOverlays, height, onTimeframeChange }) {
   const containerRef = useRef(null);
   const chartRef = useRef(null);
   const [activeTimeframe, setActiveTimeframe] = useState('6M');
+
+  // Responsive: shorter on mobile
+  const chartHeight = height || (typeof window !== 'undefined' && window.innerWidth < 768 ? 300 : 450);
 
   useEffect(() => {
     if (!containerRef.current || !candles?.length) return;
@@ -25,7 +28,7 @@ export function CandlestickChart({ candles, chartOverlays, height = 450, onTimef
 
     const chart = createChart(containerRef.current, {
       width: containerRef.current.clientWidth,
-      height,
+      height: chartHeight,
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
         textColor: '#8892a6',
@@ -120,7 +123,7 @@ export function CandlestickChart({ candles, chartOverlays, height = 450, onTimef
       chartRef.current = null;
       try { chart.remove(); } catch (_) { /* already disposed */ }
     };
-  }, [candles, chartOverlays, height]);
+  }, [candles, chartOverlays, chartHeight]);
 
   const handleTimeframeChange = (tf) => {
     setActiveTimeframe(tf.label);
