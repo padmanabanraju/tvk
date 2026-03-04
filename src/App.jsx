@@ -118,6 +118,11 @@ export default function App() {
               <ScannerView onSelectSymbol={handleAnalyze} />
             )}
           </main>
+          <footer className="max-w-[1920px] mx-auto px-6 py-4 text-center border-t border-[#252c3a]/50">
+            <p className="text-[10px] text-[#5a6478] leading-relaxed">
+              Not financial advice. TVK provides rule-based technical analysis and AI-generated insights for educational purposes only. Always do your own research before making any investment decisions.
+            </p>
+          </footer>
         </div>
       </div>
     </ErrorBoundary>
