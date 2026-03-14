@@ -14,11 +14,42 @@ Analyze the provided stock data and produce a concise 3-4 paragraph narrative co
 
 Be specific — reference actual numbers from the data. Be direct and actionable. Do not use disclaimers or hedge excessively. Format key numbers in bold using **bold** syntax.`;
 
-const CHAT_SYSTEM = `You are TVK's AI assistant — a knowledgeable, concise stock market analyst.
-You can answer questions about stocks, trading strategies, technical analysis, options, and market concepts.
-Be direct, use data when available, and keep responses focused.
-If the user asks to analyze a specific ticker, tell them to use the Analysis tab for full charts and data.
-Format important numbers and tickers in bold using **bold** syntax.`;
+const CHAT_SYSTEM = `You are TVK — a professional trading and investing AI assistant built for active traders and investors.
+
+## Your Expertise
+- **Technical Analysis**: RSI, MACD, Bollinger Bands, SMA/EMA, support/resistance, chart patterns (head & shoulders, double tops/bottoms, flags, wedges, cup & handle), candlestick patterns (doji, engulfing, hammer, shooting star), volume analysis, trend identification
+- **Options Trading**: Greeks (delta, gamma, theta, vega, rho), strategies (covered calls, protective puts, iron condors, spreads, straddles, strangles, butterflies, calendar spreads), IV rank/percentile, options chain analysis, max pain, put/call ratios, expiration dynamics, rolling, assignment risk
+- **Fundamental Analysis**: P/E, P/S, P/B, PEG, DCF basics, earnings analysis, revenue growth, margins, free cash flow, debt/equity, ROE, insider activity, institutional ownership
+- **Trading Strategies**: Swing trading, day trading setups, position sizing, risk management (stop losses, risk/reward ratios), sector rotation, mean reversion, momentum, breakout trading
+- **Market Concepts**: Market structure, order flow basics, market breadth, correlation, beta, volatility (VIX), economic indicators (CPI, PPI, NFP, FOMC), sector analysis, ETF strategies
+
+## Behavior Rules
+1. Be direct and actionable — traders value clarity over hedging
+2. When the user mentions a ticker (like TSLA, AAPL, $SPY), use any provided live market data to inform your response
+3. When live data is provided in the context, ALWAYS reference the actual numbers (price, RSI, MACD, etc.) in your answer
+4. For options questions, walk through the strategy mechanics with concrete examples (use the stock's actual price if available)
+5. Explain risk/reward for every trade idea — always mention what could go wrong
+6. If asked about a strategy, give entry criteria, exit criteria, and position sizing guidance
+7. Use **bold** for tickers, key numbers, and important terms
+8. Keep responses focused — 2-4 paragraphs max unless the user asks for detail
+9. If someone is clearly a beginner, adjust your language but don't dumb down the concepts
+10. Never give specific buy/sell recommendations — frame as educational analysis ("if a trader were bullish, they might consider...")
+11. For multi-leg options strategies, always break down max profit, max loss, and breakeven points
+
+## What You Can Do
+- Explain any trading concept, strategy, or indicator
+- Analyze stocks using live data when provided
+- Build options strategy recommendations with full P&L breakdown
+- Compare stocks, discuss sector trends, explain market events
+- Help with position sizing and risk management calculations
+- Discuss earnings plays, IV crush, and event-driven strategies
+- Teach technical analysis patterns and how to trade them
+
+## Response Format
+- Use **bold** for tickers and key numbers
+- Use bullet points for multi-part answers
+- For options strategies, use a structured format: Strategy → Legs → Max Profit → Max Loss → Breakeven → When to Use
+- Keep it conversational but professional`;
 
 // ── Format stock data for any LLM ──────────────────────────────
 
@@ -38,7 +69,11 @@ export function formatStockContext(data) {
     if (ind.sma50 != null) indicators.push(`SMA50: $${ind.sma50.toFixed(2)}`);
     if (ind.sma200 != null) indicators.push(`SMA200: $${ind.sma200.toFixed(2)}`);
     if (ind.atr != null) indicators.push(`ATR: $${ind.atr.toFixed(2)}`);
+    if (ind.adx != null) indicators.push(`ADX: ${ind.adx.toFixed(1)}`);
+    if (ind.vwap != null) indicators.push(`VWAP: $${ind.vwap.toFixed(2)}`);
+    if (ind.obv != null) indicators.push(`OBV: ${(ind.obv / 1e6).toFixed(1)}M`);
     if (ind.signal) indicators.push(`Signal: ${ind.signal}`);
+    if (ind.trendStrength) indicators.push(`Trend: ${ind.trendStrength}`);
     if (indicators.length) parts.push(`Technical: ${indicators.join(', ')}`);
   }
 
@@ -62,6 +97,52 @@ export function formatStockContext(data) {
   }
 
   return parts.join('\n');
+}
+
+// ── Extract tickers from natural language ───────────────────────
+
+const COMMON_WORDS = new Set([
+  'I', 'A', 'AM', 'AN', 'AS', 'AT', 'BE', 'BY', 'DO', 'GO', 'IF', 'IN', 'IS', 'IT', 'ME',
+  'MY', 'NO', 'OF', 'OK', 'ON', 'OR', 'SO', 'TO', 'UP', 'US', 'WE', 'AI', 'ALL', 'AND',
+  'ANY', 'ARE', 'BUT', 'BUY', 'CAN', 'DAY', 'DID', 'FOR', 'GET', 'GOT', 'HAS', 'HAD',
+  'HER', 'HIM', 'HIS', 'HOW', 'ITS', 'LET', 'LOT', 'MAY', 'NEW', 'NOT', 'NOW', 'OLD',
+  'ONE', 'OUR', 'OUT', 'OWN', 'PUT', 'RUN', 'SAY', 'SET', 'SHE', 'THE', 'TOO', 'TWO',
+  'USE', 'WAS', 'WAY', 'WHO', 'WHY', 'WIN', 'YES', 'YET', 'YOU', 'CALL', 'SELL', 'LONG',
+  'HIGH', 'LOW', 'RISK', 'STOP', 'LOSS', 'HOLD', 'CASH', 'WHAT', 'WHEN', 'WILL', 'WITH',
+  'THAT', 'THAN', 'THEM', 'THEY', 'THIS', 'ALSO', 'BEEN', 'BEST', 'BOTH', 'BULL', 'BEAR',
+  'DOES', 'DOWN', 'EACH', 'EVEN', 'FROM', 'GOOD', 'HAVE', 'HERE', 'INTO', 'JUST', 'KEEP',
+  'KNOW', 'LIKE', 'LOOK', 'MADE', 'MAKE', 'MANY', 'MORE', 'MOST', 'MUCH', 'MUST', 'NEED',
+  'NEXT', 'ONLY', 'OVER', 'SAME', 'SHOW', 'SOME', 'SUCH', 'SURE', 'TAKE', 'TELL', 'VERY',
+  'WANT', 'WELL', 'WERE', 'WORK', 'YEAR', 'YOUR', 'ABOUT', 'ABOVE', 'AFTER', 'BEING',
+  'BELOW', 'COULD', 'EVERY', 'FIRST', 'GREAT', 'MIGHT', 'NEVER', 'OTHER', 'PRICE', 'RIGHT',
+  'SHALL', 'SHARE', 'SHOULD', 'SINCE', 'STILL', 'STOCK', 'THEIR', 'THERE', 'THESE', 'THINK',
+  'THOSE', 'THREE', 'TODAY', 'TRADE', 'UNDER', 'UNTIL', 'VALUE', 'WATCH', 'WHICH', 'WHILE',
+  'WORLD', 'WOULD', 'SHORT', 'CHART', 'CHECK', 'MONEY', 'POINT', 'GOING', 'WHERE',
+  'TREND', 'BREAK', 'LEVEL', 'CLOSE', 'AFTER', 'MOVE', 'SCAN', 'FIND', 'HELP',
+  'RSI', 'MACD', 'ATR', 'EMA', 'SMA', 'ADX', 'OBV', 'IV', 'PE', 'EPS', 'ROE', 'DCF',
+  'ETF', 'IPO', 'CEO', 'CFO', 'SEC', 'FED', 'GDP', 'CPI', 'PPI', 'NFP',
+]);
+
+export function extractTickers(text) {
+  const tickers = new Set();
+
+  // Match $TICKER format (high confidence)
+  const dollarMatches = text.match(/\$([A-Z]{1,5})\b/g);
+  if (dollarMatches) {
+    dollarMatches.forEach(m => tickers.add(m.slice(1)));
+  }
+
+  // Match ALL-CAPS words that look like tickers (1-5 chars), but filter common words
+  const capsMatches = text.match(/\b([A-Z]{1,5})\b/g);
+  if (capsMatches) {
+    capsMatches.forEach(word => {
+      if (!COMMON_WORDS.has(word) && word.length >= 2) {
+        tickers.add(word);
+      }
+    });
+  }
+
+  return Array.from(tickers);
 }
 
 // ── Config builders ─────────────────────────────────────────────
@@ -257,10 +338,19 @@ export async function analyzeStock(stockData, aiConfig) {
   return adapter.extractText(data) || 'No analysis generated.';
 }
 
-export async function streamChat(messages, stockContext, aiConfig, onChunk) {
-  const systemPrompt = stockContext
-    ? `${CHAT_SYSTEM}\n\nCurrent stock context:\n${formatStockContext(stockContext)}`
-    : CHAT_SYSTEM;
+export async function streamChat(messages, stockContexts, aiConfig, onChunk) {
+  let systemPrompt = CHAT_SYSTEM;
+
+  // stockContexts can be a single object or an array of formatted context strings
+  if (stockContexts) {
+    if (typeof stockContexts === 'string') {
+      systemPrompt += `\n\n## Live Market Data\n${stockContexts}`;
+    } else if (Array.isArray(stockContexts) && stockContexts.length > 0) {
+      systemPrompt += `\n\n## Live Market Data\n${stockContexts.join('\n\n---\n\n')}`;
+    } else if (typeof stockContexts === 'object') {
+      systemPrompt += `\n\n## Live Market Data\n${formatStockContext(stockContexts)}`;
+    }
+  }
 
   const adapter = ADAPTERS[aiConfig.provider];
   const model = aiConfig.provider === 'ollama' ? aiConfig.ollamaModel : aiConfig.model;
@@ -269,7 +359,7 @@ export async function streamChat(messages, stockContext, aiConfig, onChunk) {
     systemPrompt,
     messages.map(m => ({ role: m.role, content: m.content })),
     model,
-    1024,
+    2048,
     true
   );
 

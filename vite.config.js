@@ -68,6 +68,7 @@ function aiProxyPlugin() {
             },
             body: JSON.stringify({ ...payload, stream: stream || false }),
           });
+          if (!response.ok) return await proxyJSON(response, res);
           stream ? await proxyStream(response, res) : await proxyJSON(response, res);
         } catch (err) {
           sendError(res, 502, `Failed to reach Claude API: ${err.message}`);
@@ -94,6 +95,7 @@ function aiProxyPlugin() {
             },
             body: JSON.stringify({ ...payload, stream: stream || false }),
           });
+          if (!response.ok) return await proxyJSON(response, res);
           stream ? await proxyStream(response, res) : await proxyJSON(response, res);
         } catch (err) {
           sendError(res, 502, `Failed to reach OpenAI API: ${err.message}`);
@@ -122,6 +124,7 @@ function aiProxyPlugin() {
             },
             body: JSON.stringify(payload),
           });
+          if (!response.ok) return await proxyJSON(response, res);
           stream ? await proxyStream(response, res) : await proxyJSON(response, res);
         } catch (err) {
           sendError(res, 502, `Failed to reach Gemini API: ${err.message}`);

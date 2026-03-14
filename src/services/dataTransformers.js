@@ -1,6 +1,6 @@
 import {
   calcSMA, calcEMA, calcRSI, calcMACD,
-  calcBollingerBands, calcATR, calcStochastic, latestValue
+  calcBollingerBands, calcATR, calcStochastic, calcADX, calcVWAP, calcOBV, latestValue
 } from './indicators';
 
 // Transform Finnhub candle response → array of OHLCV objects for chart
@@ -37,6 +37,9 @@ export function computeIndicators(candles) {
   const ema26 = calcEMA(closes, 26);
   const atr = calcATR(highs, lows, closes);
   const stoch = calcStochastic(highs, lows, closes);
+  const adx = calcADX(highs, lows, closes);
+  const vwap = calcVWAP(highs, lows, closes, volumes);
+  const obv = calcOBV(closes, volumes);
 
   // Latest values for indicator cards
   const current = {
@@ -55,6 +58,9 @@ export function computeIndicators(candles) {
     bollingerUpper: latestValue(bollinger.upper),
     bollingerMiddle: latestValue(bollinger.middle),
     bollingerLower: latestValue(bollinger.lower),
+    adx: latestValue(adx),
+    vwap: latestValue(vwap),
+    obv: latestValue(obv),
   };
 
   // Determine overall signal
@@ -78,8 +84,17 @@ export function computeIndicators(candles) {
     if (current.stochasticK < 20) bullSignals++;
     else if (current.stochasticK > 80) bearSignals++;
   }
+  // VWAP: price above VWAP = bullish, below = bearish
+  if (current.vwap !== null) {
+    if (price > current.vwap) bullSignals++;
+    else bearSignals++;
+  }
 
   current.signal = bullSignals > bearSignals ? 'Bullish' : bearSignals > bullSignals ? 'Bearish' : 'Neutral';
+  // ADX adds trend strength context (not directional, so doesn't change bull/bear count)
+  current.trendStrength = current.adx !== null
+    ? (current.adx > 50 ? 'Very Strong' : current.adx > 25 ? 'Strong' : current.adx > 20 ? 'Moderate' : 'Weak')
+    : null;
 
   // Chart overlay data (for TradingView Lightweight Charts line series)
   const toTimeSeries = (arr) =>
@@ -96,6 +111,8 @@ export function computeIndicators(candles) {
     bollingerUpper: toTimeSeries(bollinger.upper),
     bollingerLower: toTimeSeries(bollinger.lower),
     bollingerMiddle: toTimeSeries(bollinger.middle),
+    vwap: toTimeSeries(vwap),
+    obv: toTimeSeries(obv),
   };
 
   return { current, chartOverlays };

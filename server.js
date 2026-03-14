@@ -46,6 +46,11 @@ async function handleClaude(req, res) {
       body: JSON.stringify({ ...payload, stream: stream || false }),
     });
 
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({ error: `API error: ${response.status}` }));
+      return res.status(response.status).json(data);
+    }
+
     if (stream) {
       streamPassthrough(response, res);
     } else {
@@ -76,6 +81,11 @@ app.post('/api/ai/openai', async (req, res) => {
       },
       body: JSON.stringify({ ...payload, stream: stream || false }),
     });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({ error: `API error: ${response.status}` }));
+      return res.status(response.status).json(data);
+    }
 
     if (stream) {
       streamPassthrough(response, res);
@@ -109,6 +119,11 @@ app.post('/api/ai/gemini', async (req, res) => {
       },
       body: JSON.stringify(payload),
     });
+
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({ error: `API error: ${response.status}` }));
+      return res.status(response.status).json(data);
+    }
 
     if (stream) {
       streamPassthrough(response, res);

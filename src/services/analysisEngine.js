@@ -258,6 +258,39 @@ function analyzeMomentum(data) {
     }
   }
 
+  // ADX — trend strength
+  if (indicators.adx !== null && indicators.adx !== undefined) {
+    const adx = indicators.adx;
+    if (adx > 50) {
+      signals.push({ type: 'info', text: `ADX at ${adx.toFixed(1)} — Very strong trend in progress. Trend-following strategies favored.`, importance: 'high' });
+    } else if (adx > 25) {
+      signals.push({ type: 'info', text: `ADX at ${adx.toFixed(1)} — Strong trending market. Momentum strategies may work well.`, importance: 'medium' });
+    } else if (adx < 20) {
+      signals.push({ type: 'neutral', text: `ADX at ${adx.toFixed(1)} — Weak trend / range-bound. Mean-reversion strategies preferred.`, importance: 'medium' });
+    }
+  }
+
+  // VWAP — institutional price anchor
+  if (indicators.vwap !== null && indicators.vwap !== undefined && data.price) {
+    const vwap = indicators.vwap;
+    const pctFromVwap = ((data.price - vwap) / vwap * 100).toFixed(1);
+    if (data.price > vwap) {
+      signals.push({ type: 'bullish', text: `Price ${pctFromVwap}% above VWAP ($${vwap.toFixed(2)}) — bullish institutional positioning`, importance: 'medium' });
+    } else {
+      signals.push({ type: 'bearish', text: `Price ${pctFromVwap}% below VWAP ($${vwap.toFixed(2)}) — bearish institutional positioning`, importance: 'medium' });
+    }
+  }
+
+  // OBV — volume confirms price trend
+  if (indicators.obv !== null && indicators.obv !== undefined) {
+    const obvM = (indicators.obv / 1e6).toFixed(1);
+    signals.push({
+      type: indicators.obv > 0 ? 'bullish' : 'bearish',
+      text: `OBV at ${obvM}M — ${indicators.obv > 0 ? 'Net buying pressure (accumulation)' : 'Net selling pressure (distribution)'}`,
+      importance: 'medium'
+    });
+  }
+
   return signals;
 }
 

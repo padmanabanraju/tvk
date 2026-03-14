@@ -4,15 +4,21 @@ A powerful, AI-powered trading analysis platform that goes beyond TradingView wi
 
 ## ✨ Features
 
-- **Conversational AI Assistant** - Ask anything about stocks, strategies, and markets
-- **Advanced Technical Analysis** - RSI, MACD, Bollinger Bands, SMA, ADX, Stochastic, ATR, VWAP, OBV
-- **Gamma Exposure (GEX) Analysis** - Track options positioning and market dynamics
-- **Dark Pool Activity Tracking** - Monitor institutional trading
-- **AI Price Predictions** - Machine learning-based forecasts
-- **Sentiment Analysis** - Social, news, and institutional sentiment
-- **Smart Market Scanner** - Find opportunities across markets
-- **Options Flow Analysis** - Track unusual options activity
-- **Real-time Charts** - Interactive price and volume visualization
+- **AI Trading Chatbot** - Ask about stocks, options strategies, technical analysis, risk management — with live market data auto-injected when you mention tickers
+- **Advanced Technical Analysis** - RSI, MACD, Bollinger Bands, SMA/EMA, ADX, Stochastic, ATR, VWAP, OBV
+- **Real-time Charts** - Interactive candlestick charts with volume, multiple timeframes, and technical overlays
+- **AI-Powered Stock Analysis** - One-click deep analysis using Claude, OpenAI, Gemini, or local Ollama models
+- **AI Price Projections** - Growth-rate and volatility-based price projections with confidence bands
+- **News Sentiment Analysis** - Headlines with sentiment scoring from Finnhub
+- **Smart Market Scanner** - Live quotes for major stocks with real-time data
+- **Multi-Provider AI Support** - Bring your own API key (Claude, OpenAI, Gemini, or free local Ollama)
+- **Zero Data Storage** - API keys encrypted locally with AES-256-GCM, never sent to our servers
+
+### Planned Future Integrations
+
+- **Gamma Exposure (GEX) Analysis** - Options positioning via Tradier API
+- **Dark Pool Activity Tracking** - Institutional volume via FINRA OTC data
+- **Options Flow Analysis** - Unusual options activity scanner
 
 ## 🏃 Quick Start - Run Locally
 
@@ -204,45 +210,22 @@ sudo certbot --nginx -d your-domain.com
 
 ## 🔧 Configuration
 
-### Using Real Market Data APIs
+On first launch, the Setup Wizard guides you through configuration:
 
-To integrate real market data, sign up for these services:
+### 1. Market Data (Required)
+- **Finnhub** (Free) - Sign up at https://finnhub.io for real-time quotes, charts, news, and earnings
 
-1. **Alpha Vantage** (Free tier available)
-   - Sign up: https://www.alphavantage.co/support/#api-key
-   - Add to `.env`:
-   ```
-   VITE_ALPHA_VANTAGE_KEY=your_key_here
-   ```
+### 2. AI Provider (Optional - pick one)
+- **Claude (Anthropic)** - https://console.anthropic.com/ - Best reasoning and analysis
+- **OpenAI (GPT-4o)** - https://platform.openai.com/api-keys - Fast and versatile
+- **Google Gemini** - https://aistudio.google.com/apikey - Great multi-step reasoning
+- **Ollama (Local)** - https://ollama.com/ - Free, private, no API key needed
 
-2. **Polygon.io** (Stocks/Options data)
-   - Sign up: https://polygon.io
-   - Add to `.env`:
-   ```
-   VITE_POLYGON_KEY=your_key_here
-   ```
-
-3. **Finnhub** (Free real-time data)
-   - Sign up: https://finnhub.io
-   - Add to `.env`:
-   ```
-   VITE_FINNHUB_KEY=your_key_here
-   ```
-
-### API Integration Example
-
-In `src/App.jsx`, replace the `generateStockData` function with real API calls:
-
-```javascript
-const fetchRealStockData = async (ticker) => {
-  const API_KEY = import.meta.env.VITE_ALPHA_VANTAGE_KEY;
-  const response = await fetch(
-    `https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol=${ticker}&apikey=${API_KEY}`
-  );
-  const data = await response.json();
-  // Process and return data
-};
-```
+### Security
+- All API keys are encrypted locally with AES-256-GCM + PBKDF2
+- Keys are only decrypted in-memory after you enter your master password
+- Keys are sent to AI providers only via the local proxy server — never logged or stored server-side
+- No user data is collected or transmitted to any third party
 
 ---
 
@@ -265,12 +248,13 @@ Once deployed:
 
 ## 🎯 Usage Tips
 
-**Try these commands in the chat**:
-- "Analyze TSLA with gamma exposure"
-- "Find stocks with oversold RSI"
-- "What's the best options strategy for NVDA?"
-- "Scan for breakout candidates"
-- "Explain dark pool activity on AAPL"
+**Try these in the chat**:
+- "Analyze TSLA" - Opens full analysis with charts, indicators, and data
+- "What's a good options strategy for TSLA?" - AI answers with live price data
+- "Explain RSI and how to use it for entries" - Learn trading concepts
+- "How does an iron condor work?" - Options strategy breakdowns
+- "What do you think about NVDA vs AMD?" - Compare stocks with live data
+- "Scan market" - Opens the market scanner with live quotes
 
 ---
 
@@ -294,9 +278,11 @@ npm run preview
 - **React 18** - UI framework
 - **Vite** - Build tool and dev server
 - **Tailwind CSS** - Styling
-- **Recharts** - Chart visualization
+- **Lightweight Charts** - Candlestick and volume visualization
 - **Lucide React** - Icons
-- **Claude AI API** - Conversational intelligence
+- **Express** - Production server and AI proxy
+- **Finnhub API** - Real-time market data
+- **Multi-AI Support** - Claude, OpenAI, Gemini, Ollama
 
 ---
 
@@ -333,11 +319,12 @@ MIT License - Feel free to use and modify!
 Want to add features? Fork the repo and submit a PR!
 
 Ideas:
-- Real-time WebSocket data feeds
+- Gamma Exposure (GEX) analysis via Tradier API
+- Dark pool volume tracking via FINRA OTC data
+- Options flow / unusual activity scanner
 - Portfolio tracking and backtesting
+- Real-time WebSocket data feeds
 - Custom indicator builder
-- Automated trading signals
-- Mobile app version
 
 ---
 

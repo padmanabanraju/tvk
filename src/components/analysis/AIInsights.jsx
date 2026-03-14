@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Brain, TrendingUp, TrendingDown, Minus, AlertTriangle, CheckCircle, Info, Sparkles, Loader2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { analyzeStock, buildAiConfig, hasAiKey } from '../../services/aiClient';
+import { MarkdownMessage } from '../chat/MarkdownMessage';
 
 function SignalIcon({ type }) {
   if (type === 'bullish') return <TrendingUp className="w-3.5 h-3.5 text-[#00ffc8] shrink-0" />;
@@ -84,18 +85,12 @@ export function AIInsights({ analysis, stockData }) {
             </div>
           )}
           {claudeText && (
-            <div className="text-sm text-[#c8cdd5] leading-relaxed space-y-2">
+            <div className="text-sm text-[#c8cdd5] leading-relaxed">
               <div className="flex items-center gap-1.5 mb-2">
                 <Sparkles className="w-3.5 h-3.5 text-[#9d4edd]" />
                 <span className="text-xs font-semibold text-[#9d4edd] uppercase tracking-wider">AI Analysis</span>
               </div>
-              {claudeText.split('\n\n').map((para, i) => (
-                <p key={i}>
-                  {para.split('**').map((part, j) =>
-                    j % 2 === 1 ? <strong key={j} className="text-[#e0e6ed]">{part}</strong> : part
-                  )}
-                </p>
-              ))}
+              <MarkdownMessage content={claudeText} />
             </div>
           )}
         </div>
