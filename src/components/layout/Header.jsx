@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { MessageCircle, BarChart3, Search, Activity, Lock, Shield, Server, Globe, CheckCircle } from 'lucide-react';
+import { MessageCircle, BarChart3, Search, Activity, Lock, Shield, Server, Globe, CheckCircle, Crosshair } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const NAV_ITEMS = [
   { key: 'chat', label: 'AI Chat', icon: MessageCircle },
   { key: 'analysis', label: 'Analysis', icon: BarChart3 },
+  { key: 'radar', label: 'Radar', icon: Crosshair },
   { key: 'scanner', label: 'Scanner', icon: Search },
 ];
 

@@ -6,7 +6,13 @@ import { ScannerView } from './components/scanner/ScannerView';
 import { SetupWizard } from './components/setup/SetupWizard';
 import { UnlockScreen } from './components/setup/UnlockScreen';
 import { useAuth } from './contexts/AuthContext';
+import { KeyProvider } from './contexts/KeyContext';
 import { finnhubClient } from './services/finnhub';
+import { setApiKey as setTrFinnhubKey } from './api/trFinnhub';
+import { setApiKey as setTwelveDataKey } from './api/twelvedata';
+import { setApiKey as setTradierKey } from './api/tradier';
+import { setApiKey as setNewsApiKey } from './api/newsapi';
+import RadarView from './components/radar/RadarView';
 import { AlertTriangle } from 'lucide-react';
 
 // Error Boundary to catch rendering errors and show them instead of blank page
@@ -53,10 +59,16 @@ export default function App() {
   const [selectedSymbol, setSelectedSymbol] = useState(null);
   const [watchlist, setWatchlist] = useState(['AAPL', 'TSLA', 'NVDA', 'MSFT', 'AMD', 'GOOGL']);
 
-  // Inject Finnhub API key when unlocked
+  // Inject API keys when unlocked
   useEffect(() => {
-    if (isUnlocked && apiKeys?.finnhubApiKey) {
-      finnhubClient.setApiKey(apiKeys.finnhubApiKey);
+    if (isUnlocked && apiKeys) {
+      if (apiKeys.finnhubApiKey) {
+        finnhubClient.setApiKey(apiKeys.finnhubApiKey);
+        setTrFinnhubKey(apiKeys.finnhubApiKey);
+      }
+      if (apiKeys.twelveDataApiKey) setTwelveDataKey(apiKeys.twelveDataApiKey);
+      if (apiKeys.tradierApiKey) setTradierKey(apiKeys.tradierApiKey);
+      if (apiKeys.newsApiKey) setNewsApiKey(apiKeys.newsApiKey);
     }
   }, [isUnlocked, apiKeys]);
 
@@ -116,6 +128,11 @@ export default function App() {
             )}
             {currentView === 'scanner' && (
               <ScannerView onSelectSymbol={handleAnalyze} />
+            )}
+            {currentView === 'radar' && (
+              <KeyProvider>
+                <RadarView />
+              </KeyProvider>
             )}
           </main>
           <footer className="max-w-[1920px] mx-auto px-6 py-4 text-center border-t border-[#252c3a]/50">

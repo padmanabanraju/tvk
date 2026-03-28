@@ -52,6 +52,18 @@ export function AuthProvider({ children }) {
         saveEncryptedKeys(encrypted);
       }
 
+      // Migrate: add trading API keys if missing
+      if (keysObject.twelveDataApiKey === undefined) {
+        keysObject = {
+          ...keysObject,
+          twelveDataApiKey: '',
+          tradierApiKey: '',
+          newsApiKey: '',
+        };
+        const encrypted = await encrypt(keysObject, masterPassword);
+        saveEncryptedKeys(encrypted);
+      }
+
       setApiKeys(keysObject);
       setAuthState('unlocked');
     } catch (err) {

@@ -7,7 +7,15 @@
       "Bash(git add --all)",
       "Bash(git reset -- node_modules/ dist/ .env .DS_Store)",
       "Bash(chmod +x /Users/padhu/Projects/TVK/deploy.sh)",
-      "Bash(npm run build)"
+      "Bash(npm run build)",
+      "Bash(xargs basename:*)",
+      "Bash(grep -r \"VWAP\\\\|OBV\\\\|ADX\\\\|GEX\\\\|gamma\\\\|dark.pool\\\\|options.flow\\\\|unusual\" /Users/padhu/Projects/TVK/src --include=*.js --include=*.jsx)",
+      "WebSearch",
+      "Bash(git -C /Users/padhu/Projects/TVK log --all --oneline -- .env*)",
+      "Bash(git status:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)"
     ]
   }
 }
